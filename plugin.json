@@ -10,9 +10,13 @@
   "entryPath": "coco-downloader",
   "main": "main.js",
   "minHostVersion": "1.3.0",
-  "permissions": ["storage", "songs.write", "playlists.write"],
+  "permissions": [
+    "storage",
+    "songs.write",
+    "playlists.write"
+  ],
   "updateUrl": "",
-  "download_url": "",
+  "download_url": "https://github.com/deerwan/songloft-plugin-coco/releases/download/v0.1.0/coco-downloader.jsplugin.zip",
   "entryHash": "",
   "zipHash": ""
 }
