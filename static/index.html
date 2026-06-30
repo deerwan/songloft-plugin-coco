@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COCO音乐</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@1..480,0..1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+  <!-- 配置面板 -->
+  <div id="config-panel" class="config-panel">
+    <div class="config-header">
+      <h2>COCO音乐</h2>
+      <button id="config-toggle" class="config-toggle-btn" title="收起配置">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="config-body">
+      <div class="config-item">
+        <label for="server-url">Coco Server URL</label>
+        <input type="text" id="server-url" placeholder="http://localhost:3000" />
+        <small>填写你部署的 Coco Downloader 服务地址</small>
+      </div>
+      <div class="config-status" id="config-status"></div>
+      <button id="save-config" class="btn btn-primary">保存配置</button>
+    </div>
+  </div>
+
+  <!-- 主界面（配置保存后显示） -->
+  <div id="main-app" class="main-app" style="display:none;">
+    <header class="app-header">
+      <div class="header-content">
+        <div class="logo-area">
+          <img src="static/logo.svg" alt="Logo" class="logo-img">
+        </div>
+        <button id="open-config" class="config-mini-btn" title="打开配置">
+          <span class="material-symbols-outlined">settings</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- 搜索区域 -->
+      <section class="search-section">
+        <form id="search-form" class="search-form">
+          <div class="search-row">
+            <div class="provider-selector-wrapper">
+              <select id="provider-select" class="provider-select">
+                <option value="netease">云音乐</option>
+                <option value="qq">XCVTS</option>
+                <option value="kugou">海棠</option>
+                <option value="gequbao">歌曲宝</option>
+                <option value="gequhai">歌曲海</option>
+                <option value="bugu">布谷</option>
+                <option value="bodian">波点</option>
+                <option value="qqmp3">QQMP3</option>
+                <option value="mitu">米兔</option>
+                <option value="joox">JOOX</option>
+                <option value="migu">咪咕</option>
+                <option value="livepoo">力音</option>
+                <option value="aiting">爱听</option>
+                <option value="jianbin-netease">煎饼-1</option>
+                <option value="jianbin-qq">煎饼-2</option>
+                <option value="jianbin-kugou">煎饼-3</option>
+                <option value="jianbin-kuwo">煎饼-4</option>
+              </select>
+            </div>
+            <div class="search-input-wrapper">
+              <span class="material-symbols-outlined search-icon">search</span>
+              <input type="text" id="search-input" placeholder="输入歌曲名、歌手或专辑..." autocomplete="off" />
+              <button type="submit" id="search-btn" class="search-btn">
+                <span id="search-text">搜索</span>
+                <span id="search-loading" class="loading-spinner" style="display:none;">autorenew</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- 结果区域 -->
+      <section id="results-section" class="results-section" style="display:none;">
+        <div class="results-header">
+          <h2>搜索结果</h2>
+          <span id="results-count" class="results-count"></span>
+        </div>
+        <div id="results-list" class="results-list"></div>
+        <div id="load-more-container" class="load-more-container" style="display:none;">
+          <button id="load-more-btn" class="load-more-btn">加载更多</button>
+        </div>
+      </section>
+
+      <!-- 空状态 -->
+      <div id="empty-state" class="empty-state" style="display:none;"></div>
+
+      <!-- 热门搜索 -->
+      <div id="hotSearchSection" class="hot-search-section" style="display:none;">
+        <div class="hot-search-header">
+          <span class="material-symbols-outlined hot-search-icon">local_fire_department</span>
+          <h3>热门搜索</h3>
+          <span class="hot-search-source" id="hotSearchSource">云音乐</span>
+        </div>
+        <div id="hotSearchList" class="hot-search-grid">
+          <!-- 动态填充 -->
+        </div>
+        <div class="hot-search-refresh" onclick="loadHotSearch()">
+          <span class="material-symbols-outlined">refresh</span>
+          <span>刷新热搜</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- 播放器栏 -->
+    <div id="player-bar" class="player-bar" style="display:none;">
+      <div class="player-bar-top">
+        <div class="player-bar-top-clickable" onclick="openFullscreenPlayer()">
+          <div class="player-bar-cover-wrap" id="playerBarCoverWrap">
+            <img class="player-bar-cover" id="playerBarCover" alt="封面">
+            <span class="material-symbols-outlined player-bar-cover-placeholder">music_note</span>
+          </div>
+          <div class="player-bar-info">
+            <div class="player-bar-meta" id="playerBarMeta">
+              <span class="player-bar-title" id="currentSongTitle">暂无播放</span>
+              <span class="player-bar-artist" id="currentSongArtist">-</span>
+            </div>
+            <div class="player-bar-lyric" id="playerBarLyric">暂无歌词</div>
+          </div>
+        </div>
+      </div>
+      <div class="progress-bar-container">
+        <span class="progress-time" id="currentTime">0:00</span>
+        <div class="progress-track" id="progressTrack">
+          <div class="progress-fill" id="progressFill"></div>
+          <div class="progress-thumb" id="progressThumb"></div>
+        </div>
+        <span class="progress-time" id="totalTime">0:00</span>
+      </div>
+      <div class="playback-controls">
+        <button id="prev-btn" class="control-btn" title="上一首">
+          <span class="material-symbols-outlined">skip_previous</span>
+        </button>
+        <button id="play-pause-btn" class="control-btn play-btn" title="播放">
+          <span id="play-icon" class="material-symbols-outlined">play_arrow</span>
+          <span id="pause-icon" class="material-symbols-outlined" style="display:none;">pause</span>
+        </button>
+        <button id="next-btn" class="control-btn" title="下一首">
+          <span class="material-symbols-outlined">skip_next</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 全屏播放器 -->
+    <div class="fullscreen-player" id="fullscreenPlayer">
+      <div class="fp-bg-image" id="fpBgImage"></div>
+      <div class="fp-bg-overlay"></div>
+      <div class="fp-content">
+        <div class="fp-topbar">
+          <button class="btn-icon fp-close-btn" onclick="closeFullscreenPlayer()">
+            <span class="material-symbols-outlined">keyboard_arrow_down</span>
+          </button>
+          <button class="btn-icon fp-close-btn" id="fpVolumeBtn" title="音量">
+            <span class="material-symbols-outlined">volume_up</span>
+          </button>
+        </div>
+        <div class="fp-main">
+          <div class="fp-pages" id="fpPages">
+            <div class="fp-page fp-cover-page">
+              <div class="fp-cover-wrap" id="fpCoverWrap">
+                <img class="fp-cover-img" id="fpCoverImg" alt="封面">
+                <span class="material-symbols-outlined fp-cover-placeholder" id="fpCoverPlaceholder">music_note</span>
+              </div>
+            </div>
+            <div class="fp-page fp-lyrics-page">
+              <div class="fp-lyrics-container" id="fpLyricsContainer">
+                <div class="fp-lyrics-empty">暂无歌词</div>
+              </div>
+            </div>
+          </div>
+          <div class="fp-page-indicator" id="fpPageIndicator">
+            <span class="fp-dot active"></span>
+            <span class="fp-dot"></span>
+          </div>
+        </div>
+        <div class="fp-song-info">
+          <div class="fp-song-title" id="fpSongTitle">暂无播放</div>
+          <div class="fp-song-artist" id="fpSongArtist">-</div>
+        </div>
+        <div class="fp-progress">
+          <span class="fp-time" id="fpCurrentTime">0:00</span>
+          <div class="fp-progress-track" id="fpProgressTrack">
+            <div class="fp-progress-fill" id="fpProgressFill"></div>
+            <div class="fp-progress-thumb" id="fpProgressThumb"></div>
+          </div>
+          <span class="fp-time" id="fpTotalTime">0:00</span>
+        </div>
+        <div class="fp-controls">
+          <button class="btn-icon" id="fpPlayModeBtn" title="播放模式">
+            <span class="material-symbols-outlined">repeat</span>
+          </button>
+          <button class="btn-icon" id="fpPrevBtn" title="上一首">
+            <span class="material-symbols-outlined">skip_previous</span>
+          </button>
+          <button class="btn-icon fp-play-btn" id="fpPlayBtn" title="播放">
+            <span class="material-symbols-outlined">play_arrow</span>
+          </button>
+          <button class="btn-icon" id="fpNextBtn" title="下一首">
+            <span class="material-symbols-outlined">skip_next</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 隐藏音频元素 -->
+    <audio id="audio-element" preload="auto"></audio>
+
+    <!-- 播放模式弹出层 -->
+    <div id="playModeBackdrop" class="popup-backdrop" style="display:none" onclick="closePlayModePanel()"></div>
+    <div id="playModePanel" class="popup-panel play-mode-panel">
+      <div class="play-mode-item" data-mode="order" onclick="selectPlayMode('order')">
+        <span class="material-symbols-outlined">format_list_numbered</span>
+        <span>顺序播放</span>
+      </div>
+      <div class="play-mode-item" data-mode="loop" onclick="selectPlayMode('loop')">
+        <span class="material-symbols-outlined">repeat</span>
+        <span>列表循环</span>
+      </div>
+      <div class="play-mode-item" data-mode="single" onclick="selectPlayMode('single')">
+        <span class="material-symbols-outlined">repeat_one</span>
+        <span>单曲循环</span>
+      </div>
+    </div>
+
+    <!-- 音量弹出层 -->
+    <div id="volumeBackdrop" class="popup-backdrop" style="display:none" onclick="closeVolumePanel()"></div>
+    <div id="volumePanel" class="popup-panel volume-panel">
+      <span class="volume-percent" id="volumePercent">100%</span>
+      <div class="volume-slider-wrap">
+        <input type="range" id="volumeSlider" min="0" max="100" value="100" />
+      </div>
+      <button class="mute-btn" id="muteBtn" onclick="toggleMute()">
+        <span class="material-symbols-outlined" id="muteBtnIcon">volume_up</span>
+      </button>
+    </div>
+
+    <!-- 歌曲操作菜单 -->
+    <div id="songMenuBackdrop" class="menu-backdrop" style="display:none" onclick="closeSongMenu()"></div>
+    <div id="songMenu" class="song-menu">
+      <div class="song-menu-item" onclick="startDownload()">
+        <span class="material-symbols-outlined">download</span>
+        <span>下载</span>
+      </div>
+      <div class="song-menu-item" onclick="startImport()">
+        <span class="material-symbols-outlined">add_to_drive</span>
+        <span>导入</span>
+      </div>
+    </div>
+
+    <!-- 下载音质选择弹窗 -->
+    <div id="downloadQualityBackdrop" class="menu-backdrop" style="display:none" onclick="closeDownloadQualityPanel()"></div>
+    <div id="downloadQualityPanel" class="download-quality-panel">
+      <div class="panel-header">选择音质</div>
+      <div id="downloadQualityList" class="download-quality-list"></div>
+      <div class="panel-footer">
+        <button class="btn btn-secondary" onclick="closeDownloadQualityPanel()">取消</button>
+      </div>
+    </div>
+
+    <!-- 导入歌单选择弹窗 -->
+    <div id="importPlaylistBackdrop" class="menu-backdrop" style="display:none" onclick="closeImportPanel()"></div>
+    <div id="importPlaylistPanel" class="import-panel">
+      <div class="panel-header">导入到歌单</div>
+      <div class="import-option" onclick="importToLibrary()">
+        <span class="material-symbols-outlined">library_add</span>
+        <span>仅添加到歌曲库</span>
+      </div>
+      <div id="importPlaylistList" class="import-playlist-list">
+        <!-- 动态填充 -->
+      </div>
+      <div class="import-option" onclick="createNewPlaylist()">
+        <span class="material-symbols-outlined">add</span>
+        <span>新建歌单...</span>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-secondary" onclick="closeImportPanel()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Snackbar 消息提示 -->
+  <div id="snackbar" class="snackbar"></div>
+
+  <!-- 新建歌单对话框 -->
+  <div id="newPlaylistBackdrop" class="menu-backdrop" style="display:none" onclick="closeNewPlaylistDialog()"></div>
+  <div id="newPlaylistDialog" class="dialog-panel">
+    <div class="dialog-title">新建歌单</div>
+    <div class="dialog-body">
+      <input type="text" id="newPlaylistName" placeholder="请输入歌单名称" autocomplete="off" />
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" onclick="closeNewPlaylistDialog()">取消</button>
+      <button class="btn btn-primary" id="confirmNewPlaylist">确定</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="static/js/app.js"></script>
+</body>
+</html>
