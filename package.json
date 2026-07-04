@@ -1,6 +1,6 @@
 {
   "name": "songloft-plugin-coco",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "COCO音乐下载器 - 基于 Coco Downloader 的 Songloft 插件",
   "private": true,
   "scripts": {

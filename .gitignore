@@ -4,3 +4,5 @@ build/
 *.log
 .DS_Store
 .songloft-dev.json
+
+/songloft-plugin-coco

@@ -161,6 +161,41 @@
       const result = await SongloftPlugin.apiPost(path, body);
       return result;
     },
+    
+    // Coco Server API
+    coco: {
+      search: async (query, provider, offset = 0, limit = 20) => {
+        const params = new URLSearchParams({
+          q: query,
+          provider: provider,
+          limit: String(limit),
+          offset: String(offset),
+        });
+        return api.get('/api/search?' + params.toString());
+      },
+      
+      getUrl: async (id, provider, extra = null) => {
+        const params = new URLSearchParams({
+          id: String(id),
+          provider: provider,
+        });
+        if (extra) {
+          params.set('extra', JSON.stringify(extra));
+        }
+        return api.get('/api/url?' + params.toString());
+      },
+      
+      getLyric: async (id, provider, extra = null) => {
+        const params = new URLSearchParams({
+          id: String(id),
+          provider: provider,
+        });
+        if (extra) {
+          params.set('extra', JSON.stringify(extra));
+        }
+        return api.get('/api/lyric-fetch?' + params.toString());
+      },
+    },
   };
 
   // === 配置管理 ===
@@ -362,24 +397,14 @@
     updatePlayerBar(item);
     updateActiveItem();
 
-    // 先获取歌曲详情（包含歌词）
-    let songDetail = null;
     try {
-      songDetail = await songloft.songs.getById(item.id);
-    } catch (e) {
-      console.warn('获取歌曲详情失败:', e);
-    }
-
-    try {
-      const params = new URLSearchParams({
+      const params = {
         id: item.id,
         provider: item.provider || 'netease',
-      });
-      if (item.extra) {
-        params.set('extra', JSON.stringify(item.extra));
-      }
+        ...(item.extra && { extra: item.extra })
+      };
 
-      const data = await api.get('/api/url?' + params.toString());
+      const data = await api.coco.getUrl(params.id, params.provider, params.extra);
 
       if (data && data.url) {
         DOM.audio.src = data.url;
@@ -390,28 +415,21 @@
             updatePlayButton();
             updateFullscreenPlayIcon();
             
-            // 使用歌曲详情中的歌词
-            const lyric = songDetail?.lyric || item.lyric;
-            if (lyric) {
-              currentLyrics = parseLrc(lyric);
-              lastLyricIndex = -1;
-              startLyricAnimation();
-            } else {
-              currentLyrics = [];
-              lastLyricIndex = -1;
-              updateLyricsDisplay(-1);
-            }
+            // 获取歌词（参照模块化版本）
+            fetchLyrics(item);
             
             state.resolvingMusicId = null;
           })
           .catch((err) => {
             state.resolvingMusicId = null;
+            console.error('播放失败:', err);
           });
       } else {
         state.resolvingMusicId = null;
       }
     } catch (err) {
       state.resolvingMusicId = null;
+      console.error('获取音乐URL失败:', err);
     }
   }
 
@@ -421,7 +439,7 @@
     DOM.currentSongArtist.textContent = item.artist || '-';
     // 初始化歌词显示
     if (DOM.playerBarLyric) {
-      DOM.playerBarLyric.textContent = item.lyric ? '有歌词' : '暂无歌词';
+      DOM.playerBarLyric.textContent = '正在获取歌词...';
     }
 
     // 更新全屏播放器
@@ -501,7 +519,10 @@
     const path = state.playing
       ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'
       : 'M8 5v14l11-7z';
-    DOM.fpPlayBtn.querySelector('svg').innerHTML = `<path d="${path}"/>`;
+    const playBtnSvg = DOM.fpPlayBtn?.querySelector('svg');
+    if (playBtnSvg) {
+      playBtnSvg.innerHTML = `<path d="${path}"/>`;
+    }
     
     // 封面动画
     if (DOM.fpCoverWrap) {
@@ -1156,24 +1177,26 @@
   }
   
   /**
-   * 通过插件 API 获取歌词
+   * 获取并解析歌词
    */
-  function fetchLyricsFromApi(params) {
-    api.get('/api/lyric-fetch?' + params)
-      .then(data => {
-        if (data && data.lrc) {
-          currentLyrics = parseLrc(data.lrc);
-          lastLyricIndex = -1;
-          startLyricAnimation();
-        } else {
-          currentLyrics = [];
-          lastLyricIndex = -1;
-          updateLyricsDisplay(-1);
-        }
-      })
-      .catch(err => {
-        console.warn('[COCO] 获取歌词失败:', err);
-      });
+  async function fetchLyrics(song) {
+    try {
+      const result = await api.coco.getLyric(song.id, song.provider, song.extra);
+      if (result && result.lrc) {
+        currentLyrics = parseLrc(result.lrc);
+        lastLyricIndex = -1;
+        startLyricAnimation();
+      } else {
+        currentLyrics = [];
+        lastLyricIndex = -1;
+        updateLyricsDisplay(-1);
+      }
+    } catch (e) {
+      console.warn('[COCO] 获取歌词失败:', e);
+      currentLyrics = [];
+      lastLyricIndex = -1;
+      updateLyricsDisplay(-1);
+    }
   }
 
   /**
@@ -1215,7 +1238,7 @@
   function startLyricAnimation() {
     if (lyricRAF) return;
     
-    function animate() {
+    const animate = () => {
       const position = DOM.audio.currentTime || 0;
       const newIndex = getCurrentLyricIndex(currentLyrics, position);
       
@@ -1225,7 +1248,7 @@
       }
       
       lyricRAF = requestAnimationFrame(animate);
-    }
+    };
     
     lyricRAF = requestAnimationFrame(animate);
   }
