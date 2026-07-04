@@ -16,7 +16,7 @@
     "playlists.write"
   ],
   "updateUrl": "",
-  "download_url": "https://github.com/deerwan/songloft-plugin-coco/releases/download/v0.1.0/coco-downloader.jsplugin.zip",
+  "download_url": "https://github.com/deerwan/songloft-plugin-coco/releases/download/v1.0.0/coco-downloader.jsplugin.zip",
   "entryHash": "",
   "zipHash": ""
 }
