@@ -32,7 +32,7 @@
     <header class="app-header">
       <div class="header-content">
         <div class="logo-area">
-          <img src="static/logo.svg" alt="Logo" class="logo-img">
+          <img src="static/icon.svg" alt="Logo" class="logo-img">
         </div>
         <button id="open-config" class="config-mini-btn" title="打开配置">
           <span class="material-symbols-outlined">settings</span>
@@ -194,9 +194,6 @@
           <span class="fp-time" id="fpTotalTime">0:00</span>
         </div>
         <div class="fp-controls">
-          <button class="btn-icon" id="fpPlayModeBtn" title="播放模式">
-            <span class="material-symbols-outlined">repeat</span>
-          </button>
           <button class="btn-icon" id="fpPrevBtn" title="上一首">
             <span class="material-symbols-outlined">skip_previous</span>
           </button>
@@ -213,22 +210,6 @@
     <!-- 隐藏音频元素 -->
     <audio id="audio-element" preload="auto"></audio>
 
-    <!-- 播放模式弹出层 -->
-    <div id="playModeBackdrop" class="popup-backdrop" style="display:none" onclick="closePlayModePanel()"></div>
-    <div id="playModePanel" class="popup-panel play-mode-panel">
-      <div class="play-mode-item" data-mode="order" onclick="selectPlayMode('order')">
-        <span class="material-symbols-outlined">format_list_numbered</span>
-        <span>顺序播放</span>
-      </div>
-      <div class="play-mode-item" data-mode="loop" onclick="selectPlayMode('loop')">
-        <span class="material-symbols-outlined">repeat</span>
-        <span>列表循环</span>
-      </div>
-      <div class="play-mode-item" data-mode="single" onclick="selectPlayMode('single')">
-        <span class="material-symbols-outlined">repeat_one</span>
-        <span>单曲循环</span>
-      </div>
-    </div>
 
     <!-- 音量弹出层 -->
     <div id="volumeBackdrop" class="popup-backdrop" style="display:none" onclick="closeVolumePanel()"></div>

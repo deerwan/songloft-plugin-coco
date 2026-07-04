@@ -44,13 +44,12 @@
     currentTime: 0,
     duration: 0,
     volume: 1,
-    playMode: 'order', // order | loop | single
     // Fullscreen
     fullscreenOpen: false,
     coverObjectUrl: null,
     coverUrl: '',
     // Popups
-    playModePanelOpen: false,
+    volumePanelOpen: false,
     volumePanelOpen: false,
     // Song menu
     selectedSongIndex: -1,
@@ -113,17 +112,15 @@
     fpSongArtist: $('#fpSongArtist'),
     fpProgressFill: $('#fpProgressFill'),
     fpProgressThumb: $('#fpProgressThumb'),
+    fpProgressTrack: $('#fpProgressTrack'),
     fpCurrentTime: $('#fpCurrentTime'),
     fpTotalTime: $('#fpTotalTime'),
     fpPlayBtn: $('#fpPlayBtn'),
     fpPrevBtn: $('#fpPrevBtn'),
     fpNextBtn: $('#fpNextBtn'),
-    fpPlayModeBtn: $('#fpPlayModeBtn'),
     fpVolumeBtn: $('#fpVolumeBtn'),
     fpLyricsContainer: $('#fpLyricsContainer'),
     // Popups
-    playModePanel: $('#playModePanel'),
-    playModeBackdrop: $('#playModeBackdrop'),
     volumePanel: $('#volumePanel'),
     volumeBackdrop: $('#volumeBackdrop'),
     volumeSlider: $('#volumeSlider'),
@@ -516,14 +513,11 @@
   }
 
   function updateFullscreenPlayIcon() {
-    const path = state.playing
-      ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'
-      : 'M8 5v14l11-7z';
-    const playBtnSvg = DOM.fpPlayBtn?.querySelector('svg');
-    if (playBtnSvg) {
-      playBtnSvg.innerHTML = `<path d="${path}"/>`;
+    const playBtnSpan = DOM.fpPlayBtn?.querySelector('span.material-symbols-outlined');
+    if (playBtnSpan) {
+      playBtnSpan.textContent = state.playing ? 'pause' : 'play_arrow';
     }
-    
+
     // 封面动画
     if (DOM.fpCoverWrap) {
       DOM.fpCoverWrap.classList.toggle('playing', !!state.playing);
@@ -571,61 +565,6 @@
   }
 
   // === 播放模式 ===
-  const playModes = [
-    { value: 'order', label: '顺序播放' },
-    { value: 'loop', label: '列表循环' },
-    { value: 'single', label: '单曲循环' },
-  ];
-
-  function togglePlayModePanel(triggerEl) {
-    if (state.playModePanelOpen) {
-      closePlayModePanel();
-      return;
-    }
-    
-    if (triggerEl) {
-      const rect = triggerEl.getBoundingClientRect();
-      DOM.playModePanel.style.top = (rect.bottom + 4) + 'px';
-      DOM.playModePanel.style.right = '16px';
-    } else {
-      DOM.playModePanel.style.bottom = '120px';
-      DOM.playModePanel.style.left = '16px';
-    }
-    
-    DOM.playModeBackdrop.style.display = 'block';
-    DOM.playModePanel.classList.add('show');
-    state.playModePanelOpen = true;
-    
-    // 高亮当前模式
-    $$('.play-mode-item').forEach(item => {
-      item.classList.toggle('active', item.dataset.mode === state.playMode);
-    });
-  }
-
-  function closePlayModePanel() {
-    DOM.playModePanel.classList.remove('show');
-    DOM.playModeBackdrop.style.display = 'none';
-    state.playModePanelOpen = false;
-  }
-
-  function selectPlayMode(mode) {
-    state.playMode = mode;
-    closePlayModePanel();
-    
-    // 更新播放模式按钮图标
-    updatePlayModeIcon();
-  }
-
-  function updatePlayModeIcon() {
-    const modeInfo = playModes.find(m => m.value === state.playMode);
-    if (!modeInfo) return;
-    
-    // 更新全屏按钮 title
-    if (DOM.fpPlayModeBtn) {
-      DOM.fpPlayModeBtn.title = modeInfo.label;
-    }
-  }
-
   // === 音量控制 ===
   function toggleVolumePanel() {
     if (state.volumePanelOpen) {
@@ -1325,6 +1264,17 @@
     });
   }
 
+  // 全屏进度条点击
+  if (DOM.fpProgressTrack) {
+    DOM.fpProgressTrack.addEventListener('click', (e) => {
+      if (state.duration > 0) {
+        const rect = DOM.fpProgressTrack.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        DOM.audio.currentTime = percent * state.duration;
+      }
+    });
+  }
+
   // === 上一首/下一首 ===
   function playPrev() {
     if (state.results.length === 0 || !state.activeMusic) return;
@@ -1498,20 +1448,11 @@
     DOM.prevBtn.addEventListener('click', playPrev);
     DOM.nextBtn.addEventListener('click', playNext);
     
-    // 全屏播放器控制
-    DOM.fpPlayBtn.addEventListener('click', togglePlayPause);
-    DOM.fpPrevBtn.addEventListener('click', playPrev);
-    DOM.fpNextBtn.addEventListener('click', playNext);
-    DOM.fpPlayModeBtn.addEventListener('click', () => togglePlayModePanel());
-    DOM.fpVolumeBtn.addEventListener('click', () => toggleVolumePanel());
-    
-    // 播放模式面板
-    DOM.playModeBackdrop.addEventListener('click', closePlayModePanel);
-    $$('.play-mode-item').forEach(item => {
-      item.addEventListener('click', () => {
-        selectPlayMode(item.dataset.mode);
-      });
-    });
+  // 全屏播放器控制
+  DOM.fpPlayBtn.addEventListener('click', togglePlayPause);
+  DOM.fpPrevBtn.addEventListener('click', playPrev);
+  DOM.fpNextBtn.addEventListener('click', playNext);
+  DOM.fpVolumeBtn.addEventListener('click', () => toggleVolumePanel());
     
     // 音量面板
     DOM.volumeBackdrop.addEventListener('click', closeVolumePanel);
@@ -1548,9 +1489,6 @@
   // 挂载全局函数
   window.openFullscreenPlayer = openFullscreenPlayer;
   window.closeFullscreenPlayer = closeFullscreenPlayer;
-  window.togglePlayModePanel = togglePlayModePanel;
-  window.closePlayModePanel = closePlayModePanel;
-  window.selectPlayMode = selectPlayMode;
   window.toggleVolumePanel = toggleVolumePanel;
   window.closeVolumePanel = closeVolumePanel;
   window.toggleMute = toggleMute;
