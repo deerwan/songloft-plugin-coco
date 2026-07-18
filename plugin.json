@@ -15,7 +15,7 @@
     "songs.write",
     "playlists.write"
   ],
-  "updateUrl": "",
+  "updateUrl": "https://raw.githubusercontent.com/deerwan/songloft-plugin-coco/main/plugin.json",
   "download_url": "https://github.com/deerwan/songloft-plugin-coco/releases/download/v1.0.0/coco-downloader.jsplugin.zip",
   "entryHash": "",
   "zipHash": ""
